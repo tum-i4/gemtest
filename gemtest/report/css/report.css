@@ -1,0 +1,50 @@
+.metamorphic__error {
+    color: red;
+    font-family: monospace;
+}
+
+.metamorphic__hidden {
+    display: none;
+}
+
+table.metamorphic__table {
+    margin: 8px;
+}
+
+td.metamorphic__td {
+    min-width: 60px;
+}
+
+.metamorphic__error_button {
+    font-size: 0.8em;
+    font-family: monospace;
+    border: none;
+    background: transparent;
+    padding: 8px 0px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.metamorphic__function {
+    display: inline;
+}
+
+.metamorphic__function_src {
+    display: none;
+    position: absolute;
+    max-width: 400px;
+    background-color: white;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 0 10px #ccc;
+}
+
+.metamorphic__function:hover .metamorphic__function_src {
+    display: block;
+}
+
+.metamorphic__function_src code {
+    display: block;
+    margin-top: 6px;
+}

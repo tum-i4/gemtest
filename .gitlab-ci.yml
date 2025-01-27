@@ -1,0 +1,258 @@
+default:
+  image: python:3.10
+  before_script: # poetry virtual env initialization
+    - apt-get update -qy
+    - pip install poetry
+    - export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+    - poetry install --no-ansi --no-interaction
+    - source `poetry env info --path`/bin/activate
+
+
+stages:
+  - linter
+  - code coverage
+  - code quality
+  - compatability
+  - test suite quality
+  - publish
+  - examples 
+
+include:
+  - template: Code-Quality.gitlab-ci.yml
+
+variables:
+  LANG: C.UTF-8
+
+
+prospector:
+  stage: linter
+  script:
+    - echo "This is the prospector linter stage"
+    - poetry run lint
+
+pytest_statement:
+  stage: code coverage
+  script:
+    - echo "This is the statement coverage test stage"
+    - coverage run --omit="tests/*" -m pytest tests --junitxml=report.xml --html=report.html --self-contained-html
+    - coverage report --ignore-errors
+    - coverage xml --ignore-errors
+    - coverage html --ignore-errors
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    name: "$CI_JOB_NAME"
+    when: always
+    paths:
+      - htmlcov/*
+      - report.html
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+pytest_branch:
+  stage: code coverage
+  script:
+    - echo "This is the branch coverage test stage"
+    - coverage run --branch --omit="tests/*" -m pytest tests --junitxml=report.xml --html=report.html --self-contained-html
+    - coverage report --ignore-errors
+    - coverage xml --ignore-errors
+    - coverage html --ignore-errors
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    name: "$CI_JOB_NAME"
+    when: always
+    paths:
+      - htmlcov/*
+      - report.html
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+cosmic_ray:
+  stage: test suite quality
+  allow_failure: true
+  needs: [prospector]
+  script:
+    - apt-get update -qy
+    - apt-get install -y bc
+    - pip install anybadge
+    - echo "This is the mutation test stage"
+    - poetry run mutation-test
+    - OUTPUT=$(poetry run mutation-text-report --config_path gmt_mutation_config.toml --database_path gmt_mutation.sqlite | tail -1)
+    - OUTPUT=$(echo "$OUTPUT" | grep -oP '\(\K[0-9.]+(?=%\))')
+    - OUTPUT=$(echo "100 - ${OUTPUT}" | bc)
+    - anybadge -l "Mutation Score" -v $OUTPUT -f mutation_score.svg coverage
+  artifacts:
+    when: always
+    paths:
+      - mutation_score.svg
+      - mutation_report.html
+  tags:
+    - single
+
+code_quality:
+  stage: code quality
+  before_script:
+    - apk update
+    - apk add py3-pip
+  artifacts:
+    paths: [ gl-code-quality-report.json ]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+code_quality_html:
+  extends: code_quality
+  variables:
+    REPORT_FORMAT: html
+  artifacts:
+    paths: [ gl-code-quality-report.html ]
+
+qodana:
+  stage: code quality
+  only:
+    - main
+    - develop
+    - merge_requests
+  image:
+    name: jetbrains/qodana-python-community:2023.2
+    entrypoint: [ "" ]
+  variables:
+    QODANA_TOKEN: $qodana_token
+  script:
+    - qodana --save-report --results-dir=$CI_PROJECT_DIR/.qodana/results
+      --cache-dir=$CI_PROJECT_DIR/.qodana/cache
+  artifacts:
+    paths:
+      - qodana/report/
+    expose_as: 'Qodana report'
+
+
+pytest_version:
+  stage: compatability
+  image: python:$VERSION
+  needs: [prospector]
+  script:
+    - pip install poetry
+    - export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+    - poetry install --no-ansi --no-interaction
+    - source `poetry env info --path`/bin/activate
+    - echo "This is the Python $VERSION compatability test stage"
+    - poetry run pytest tests
+  parallel:
+    matrix:
+      - VERSION: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+
+
+pytest_win_10:
+  stage: compatability
+  image: mcr.microsoft.com/windows
+  needs: [prospector]
+  before_script: [ ]
+  script:
+    - python -m virtualenv pytest_win_10
+    - .\pytest_win_10\Scripts\activate
+    - python -m pip install poetry
+    - python -m poetry install --no-ansi --no-interaction
+    - echo "This is the Python Windows Server 2019 compatability test stage"
+    - python -m poetry run pytest tests
+  tags:
+    - windows
+
+pytest_wsl_win_10:
+  stage: compatability
+  image: mcr.microsoft.com/windows
+  needs: [prospector]
+  before_script: [ ]
+  script:
+    - wsl python3 -m pip install poetry
+    - wsl export PATH="$HOME/.local/bin:$HOME/bin:$PATH"
+    - wsl export PATH="$HOME/.poetry/bin:$PATH"
+    - wsl python3 -m poetry install --no-ansi --no-interaction
+    - wsl python3 -m poetry env info --path
+    - wsl echo "This is the Python 3.10 run in WSL1 run on Windows Server 2019 compatability test stage"
+    - wsl bash -c 'PATH="\$HOME/.local/bin:\$HOME/bin:\$PATH" && export PATH="\$HOME/.poetry/bin:\$PATH" && python3 -m poetry run pytest tests'
+  tags:
+    - windows
+      
+publishing:
+  stage: publish
+  needs: [ pytest_statement, pytest_branch, prospector, pytest_version, pytest_win_10, pytest_wsl_win_10 ]
+  script:
+    - echo "This is the publish stage"
+    - poetry config pypi-token.pypi "$PYPI_API_KEY"
+    - poetry publish --build
+    - echo "Publishing done!"
+  only:
+    - main
+  when: manual
+
+# Examples using Python 3.10
+.knapsack_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example-fail knapsack/test_knapsack.py
+
+.simple_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example simple/test_add.py
+    - poetry run example simple/test_avg.py
+
+.trigonometry_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example trigonometry/test_cos.py
+    - poetry run example trigonometry/test_faulty_sin.py
+    - poetry run example trigonometry/test_sin.py
+
+.house_pricing_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example house_pricing/test_house_pricing.py
+
+.shortest_path_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example shortest_path/test_path.py
+
+.facial_keypoints_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example-fail facial_keypoints/test_keypoints.py
+
+.radar_retraining_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example-fail radar_retraining/test_radar.py
+
+.gtsrb_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example-fail gtsrb/metamorphic_tests
+
+.mnist_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example-fail mnist/metamorphic_tests/test_label_preserving.py
+    - poetry run example-fail mnist/metamorphic_tests/test_non_label_preserving.py
+
+.numpy_example:
+  stage: examples
+  needs: [ ]
+  script:
+    - poetry run example linalg/test_solve.py
+    - poetry run example linalg/test_solve_tighter_oracle.py
+    - poetry run example linalg/test_transpose.py

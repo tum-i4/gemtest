@@ -1,0 +1,11 @@
+[cosmic-ray]
+module-path = "gemtest"
+timeout = 30.0
+excluded-modules = [
+    "gemtest/conftest.py",
+    "gemtest/logger.py"
+]
+test-command = "pytest tests --disable-logger"
+
+[cosmic-ray.distributor]
+name = "local"

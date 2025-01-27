@@ -1,0 +1,24 @@
+strictness: medium
+test-warnings: true
+doc-warnings: false
+
+ignore-patterns:
+  - (^|/)skip(this)?(/|$)
+
+bandit:
+  run: true
+  options:
+    config: .bandit.yml
+
+pycodestyle:
+  disable:
+    - B101
+    - D212
+  options:
+    max-line-length: 95
+
+mccabe:
+  run: false
+
+mypy:
+  run: true

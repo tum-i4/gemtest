@@ -1,0 +1,108 @@
+[tool.poetry]
+name = "gemtest"
+version = "1.0.0"
+description = "gemtest: a general metamorphic testing framework with pytest"
+keywords = ["metamorphic testing", "test", "framework"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
+]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/tum-i4/gemtest"
+authors = [
+    "Simon Speth <simon.speth@tum.de>",
+    "Paul Schwind <paul.schwind@tum.de>",
+    "Martin Rau <martin.rau@tum.de>",
+    "Ting-Yu Lu <ty.lu@tum.de>",
+    "Danny Benlin Oswan <danben.oswan@tum.de>",
+    "Tathagata Bandyopadhyay <tathagata.bandyopadhyay@tum.de>",
+    "Fabian Schlachter <fabian.schlachter@tum.de>",
+    "Moritz Pötzsch <moritz.poetzsch@tum.de>",
+    "Robin Brase <robin.brase@tum.de>",
+    "Alexander Hobmeier <alexander.hobmeier@tum.de>",
+]
+maintainers = ["Simon Speth <simon.speth@tum.de>"]
+packages = [
+    { include = "gemtest", format = ["sdist", "wheel"] },
+    { include = "tests", format = "sdist" },
+]
+
+[tool.poetry.scripts]
+cov = "scripts.cov:html_coverage"
+install-hook = "scripts.install_hook:install_hook"
+lint = "scripts.lint:lint"
+test = "scripts.run_tests:run_tests"
+example = "scripts.run_tests:run_example"
+example-fail = "scripts.run_tests:run_example_fail"
+web-app = "scripts.run_web_app:run_web_app"
+
+mutation-test = "scripts.run_mutation_testing:run_cosmic_ray"
+mutation-new-config = "scripts.run_mutation_testing:create_new_config"
+mutation-init = "scripts.run_mutation_testing:init_new_session"
+mutation-baseline = "scripts.run_mutation_testing:check_baseline"
+mutation-exec = "scripts.run_mutation_testing:execute"
+mutation-text-report = "scripts.run_mutation_testing:create_report"
+mutation-html-report = "scripts.run_mutation_testing:create_html_report"
+
+[tool.poetry.plugins."pytest11"]
+metamorphic = "gemtest"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.14"
+hypothesis = "^6.49.1"
+importlib-resources = [
+    {version = "<6.5.0", python = "3.8"},
+    {version = "^6.5.0", python = "3.9"}
+]
+matplotlib = [
+    {version = "^3.5.2", python = ">=3.8,<3.12"},
+    {version = "^3.8.0", python = ">=3.12,<3.14"}
+]
+numpy = [
+    {version = "^1.23.0", python = ">=3.8,<3.12"},
+    {version = "^2.0.0", python = ">=3.12,<3.14"}
+]
+opencv-python-headless = "^4.7.0.0"
+pytest = ">=7.1.2,<9.0.0"
+pytest-html = "^3.1.1"
+pytest-xdist = "^3.2.1"
+typing_extensions = ">=4.12.2,<5.0.0"
+wrapt = "^1.14.1"
+
+[tool.poetry.group.test.dependencies]
+mypy = "^0.981"
+prospector = { extras = ["with_mypy", "with_bandit"], version = "^1.7.7" }
+pylint = "^2.17.7"
+pytest-cov = "^4.0.0"
+cosmic-ray = "^8.3.7"
+setuptools = [
+    {version = "<75.4.0", python = "3.8"},
+    {version = "^75.7.0", python = ">=3.9,<3.14"}
+]
+
+[tool.mypy]
+plugins = "numpy.typing.mypy_plugin"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
