@@ -1,6 +1,6 @@
 # GeMTest 💎: A General Metamorphic Testing Framework
 
-The ``gemtest`` framework makes it easy to write metamorphic relations in Python, from where the framework derives 
+The ``gemtest`` framework can simply be installed via ``pip install gemtest`` and makes it easy to write metamorphic relations in Python, from which the framework derives 
 multiple metamorphic test cases.
 Metamorphic test cases are then executed as a ``pytest`` test suite.
 
@@ -55,7 +55,7 @@ test_sin_metamorphic.py ..................
   visualization of in- and outputs if a visualization function is provided, additionally 
   test results are stored in an SQLite database and can be viewed with the ``gemtest-webapp``.
 
-![Function Domains](resources/Simple_MR_Scheme.png)
+![Function Domains](https://raw.githubusercontent.com/tum-i4/gemtest/main/resources/Simple_MR_Scheme.png)
 A simple metamorphic relation consists of 4 parts: 
 1. The creation of the metamorphic relation. Every metamorphic relation requires a name and a data source from 
 which the metamorphic test cases are created.
@@ -173,7 +173,7 @@ def test_dummy_sut(input: float) -> float:
   return math.sin(input)
 ```
 
-![Metamorphic Relation Scheme](resources/General_MR_Scheme.png)
+![Metamorphic Relation Scheme](https://raw.githubusercontent.com/tum-i4/gemtest/main/resources/General_MR_Scheme.png)
 
 A general metamorphic relation consists of 4 parts: 
 1. The creation of the metamorphic relation. Every metamorphic relation requires a name and a data source 
@@ -251,5 +251,5 @@ If you find the ``gemtest`` framework useful in your research or projects, pleas
 ```
 
 ## License
-[MIT License](https://gitlab.lrz.de/pypracticum/team-mt-metamorphic-testing-framework/-/blob/main/LICENSE)
+[MIT License](https://github.com/tum-i4/gemtest/blob/main/LICENSE)
 

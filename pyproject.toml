@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gemtest"
-version = "1.0.0"
+version = "1.0.1"
 description = "gemtest: a general metamorphic testing framework with pytest"
 keywords = ["metamorphic testing", "test", "framework"]
 classifiers = [
